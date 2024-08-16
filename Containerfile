@@ -1,11 +1,12 @@
-FROM debian:stable-slim
+FROM docker.io/library/debian:stable-slim
 
 ARG USER_ID=1400
 ARG GROUP_ID=1450
 
-RUN apt update
-RUN apt install -y vsftpd db-util
-RUN apt clean
+RUN apt-get update \
+  && apt-get install -yqq -o=Dpkg::Use-Pty=0 vsftpd db-util \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /tmp/vsftpd/empty
 
