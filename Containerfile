@@ -1,31 +1,15 @@
-FROM docker.io/library/debian:stable-slim
+FROM docker.io/library/alpine:3.20.2
+ENV FTP_USER=test \
+    FTP_PASS=test \
+    GID=1000 \
+    UID=1000
 
-ARG USER_ID=1400
-ARG GROUP_ID=1450
+RUN apk add --no-cache --update \
+	vsftpd==3.0.5-r2
 
-RUN apt-get update \
-  && apt-get install -yqq -o=Dpkg::Use-Pty=0 vsftpd db-util \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+COPY /src/vsftpd.conf /etc/vsftpd
+COPY /src/vsftpd_users /etc/pam.d
+COPY /src/entrypoint.sh /
 
-RUN mkdir -p /tmp/vsftpd/empty
-
-RUN usermod -u ${USER_ID} ftp
-RUN groupmod -g ${GROUP_ID} ftp
-
-ENV PASV_ADDRESS **IPv4**
-
-COPY vsftpd.conf /etc/vsftpd/
-COPY vsftpd_virtual /etc/pam.d/
-COPY run-vsftpd.sh /usr/sbin/
-
-RUN chmod +x /usr/sbin/run-vsftpd.sh
-RUN mkdir -p /home/vsftpd/
-RUN chown -R ftp:ftp /home/vsftpd/
-
-VOLUME /home/vsftpd
-VOLUME /var/log/vsftpd
-
-EXPOSE 3321
-
-CMD ["/usr/sbin/run-vsftpd.sh"]
+ENTRYPOINT [ "/entrypoint.sh" ]
+EXPOSE 20/tcp 21/tcp 40000-40009/tcp
